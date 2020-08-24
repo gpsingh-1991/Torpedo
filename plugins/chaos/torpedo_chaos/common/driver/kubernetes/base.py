@@ -27,9 +27,7 @@ urllib3.disable_warnings()
 class Kubernetes(object):
 
     def __init__(self, **kwargs):
-        self.token = kwargs['token']
+        config.load_kube_config()
         conf = client.Configuration()
-        conf.host = kwargs['host']
         conf.verify_ssl = False
-        conf.api_key = {"authorization": "Bearer " + self.token}
         self.api_client = client.ApiClient(conf)
