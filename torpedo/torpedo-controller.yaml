@@ -240,7 +240,7 @@ data:
                               {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
                               server: "{{spec['job-params'][0][0]['chaos-params']['cluster-config']['apiserver']}}"
                               {% else %}
-                              server: ''
+                              server: 'https://kubernetes.default.svc.cluster.local:443'
                               {% endif %}
                           contexts:
                           - name: default-context
