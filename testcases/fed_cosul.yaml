@@ -1,0 +1,36 @@
+apiVersion: torpedo.k8s.att.io/v1
+kind: Torpedo
+metadata:
+  name: fed-servicereg-test
+spec:
+  auth:
+    test_service_endpoint: http://32.68.220.23
+
+  job-params:
+    - - service: fedservicereg
+        component: consul
+        kill-interval: 90
+        kill-count: 1
+        same-node: False
+        pod-labels:
+          - 'app.kubernetes.io/name=argocd-application-controller'
+        node-labels:
+          - 'workload-type=cnf'
+        service-mapping: generic
+        name: fed-consul
+        nodes: ''
+        max-nodes: 1
+        extra-args: ''
+        job-duration: 120
+        count: 60
+        sanity-checks: ''
+
+  orchestrator_plugin: "torpedo-traffic-orchestrator"
+  chaos_plugin: "torpedo-chaos"
+  namespace: argocd
+  volume_storage_class: "general"
+  volume_storage: "10Gi"
+  volume_name: "consul-torpedo-test"
+  #remote-cluster: "True"
+  #kube-apiserver: "https://kubernetes.default.svc.cluster.local:443"
+  #remote-cluster-token: "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4tcXZ2NmgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjJjYzRiM2Y2LWE0NmItNDIwOC04YzU4LWUzY2FkNmY0MDExOSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.hOEzxR84s66LBwH5T_00pNR3tGsZxeOl60lq56uBbTQ5NcXwSBjd7U6lbRGkTzNK7oupNHGiB04OBZw1u4YDcDZsPM5s0M61fkpKmXGVwfPEtoCCgR3yhqqCCHnMIIfuO4RBQ2wUCpTMfJvLVdMwOFqxa-IbezomUQ3MvagFn3fmnpz76dgPzuUUA8WmF8A1Y2xrsr9yBF9iROJmS7JgGqdJkZBv69N5e0PZF_2ndnGbB6IUpOqp_-QSzvz17fp-OQT9Qm-6ZAK2q3TZU_v4r-zRzJw-YD0Uqz5-TCIPM4vqAzzeOUZ7-9r5lFOSjASbP63wFVnmCfoLipBJKP9XBw"

@@ -18,7 +18,7 @@ from node_drain import NodeDrain
 from node_power_off import NodePowerOff
 from ucp import UCP
 from vm_ping import VmPing
-
+from generic import GENERIC
 
 class Runner():
     """Placeholder to run the tasks concurrently"""
