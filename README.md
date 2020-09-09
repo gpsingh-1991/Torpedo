@@ -29,7 +29,7 @@ Label the nodes on which log-collector jobs to run as log-collector=enabled
 
 
 ```
-      git clone https://github.com/att-comdev/torpedo.git
+      git clone https://github.com/bm-metamorph/Torpedo.git
 ```
 
 ### Install Metacontroller
