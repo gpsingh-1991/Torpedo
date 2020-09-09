@@ -22,7 +22,6 @@ data:
             kind: Job
             metadata:
               generateName: sanity-checks-{{inputs.parameters.name}}-
-              namespace: metacontroller
             spec:
               template:
                 metadata:
@@ -82,10 +81,12 @@ data:
           - name
           - namespace
           - auth
+          - service
+          - component
           - job-duration
           - count
           - nodes
-          - traffic-module
+          - service-mapping
           - extra-args
           - pod-labels
     torpedo_argo.j2: |
@@ -115,13 +116,13 @@ data:
                 {% set traffic_name_list = [] %}
                 {% set chaos_name_list = [] %}
                 {% for job in series_jobs %}
-                {% if "chaos-params" not in job %}
-                {{ job.update({"enable-chaos": "False"}) }}
+                {% if "enable-chaos" not in job %}
+                {{ job.update({"enable-chaos": "True"}) }}
                 {% endif %}
-                {% if "traffic-params" not in job %}
-                {{ job.update({"enable-traffic": "False"}) }}
+                {% if "enable_traffic" not in job %}
+                {{ job.update({"enable-traffic": "True"}) }}
                 {% endif %}
-                {% if job['traffic-params'] %}
+                {% if job['enable-traffic'] == "True" %}
                 - name: {{ "orchestrator-" + job['name'] }}
                   {% if orchestrator_dependency %}
                   dependencies: {{orchestrator_dependency + chaos_dependency}}
@@ -129,31 +130,23 @@ data:
                   template: torpedo-job
                   arguments:
                     parameters:
+                    - name: auth
+                      value: "{{spec['auth']}}"
                     - name: namespace
-                      value: '{{job['chaos-params']['namespace']}}'
+                      value: '{{spec['namespace']}}'
+                    - name: volume-name
+                      value: {{"pvc-" + spec['volume_name']}}
                     - name: config-name
-                      {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                      value: '{{job['chaos-params']['cluster-config']['name']}}'
-                      {% else %}
                       value: remote-cluster-kube-config
-                      {% endif %}
-                    - name: nodes
-                      value: '{{job['chaos-params']['nodes']}}'
-                    - name: pod-labels
-                      value: "{{job['chaos-params']['pod-labels']}}"
                     {% for key, value in job.items() %}
-                    {% if key != "sanity-checks" and key != 'chaos-params' and key != 'traffic-params'%}
+                    {% if key != "sanity-checks" %}
                     - name: {{ key }}
                       value: "{{ value }}"
                     {% endif %}
                     {% endfor %}
-                    {% for key, value in job['traffic-params'].items() %}
-                    - name: {{ key }}
-                      value: "{{ value }}"
-                    {% endfor %}
                 {{ traffic_name_list.append("orchestrator-" + job['name']) }}
                 {% endif %}
-                {% if job['chaos-params'] %}
+                {% if job['enable-chaos'] == "True" %}
                 - name: {{ "chaos-" +   job['name'] }}
                   {% if chaos_dependency %}
                   dependencies: {{orchestrator_dependency + chaos_dependency}}
@@ -161,27 +154,23 @@ data:
                   template: chaos-job
                   arguments:
                     parameters:
+                    - name: namespace
+                      value: '{{ spec['namespace'] }}'
+                    - name: volume-name
+                      value: {{"pvc-" + spec['volume_name']}}
                     - name: config-name
-                      {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                      value: '{{job['chaos-params']['cluster-config']['name']}}'
-                      {% else %}
                       value: remote-cluster-kube-config
-                      {% endif %}
                     {% for key, value in job.items() %}
-                    {% if key != "sanity-checks" and key != 'chaos-params' and key != 'traffic-params'%}
+                    {% if key != "sanity-checks" %}
                     - name: {{ key }}
                       value: "{{ value }}"
                     {% endif %}
                     {% endfor %}
-                    {% for key, value in job['chaos-params'].items() %}
-                    - name: {{ key }}
-                      value: "{{ value }}"
-                    {% endfor %}
                 {{ chaos_name_list.append("chaos-" + job['name']) }}
                 {% endif %}
-                {{ service_list.append({"service": job['name'], "duration": job['job-duration']}) }}
+                {{ service_list.append({"service": job['service'] + "-" + job['component'], "duration": job['job-duration']}) }}
                 {% if job['sanity-checks'] %}
-                {% for check in job['sanity-params'] %}
+                {% for check in job['sanity-checks'] %}
                 - name: {{ "sanity-checks-" +   check['name'] }}
                   {% if orchestrator_dependency %}
                   dependencies: {{orchestrator_dependency + chaos_dependency}}
@@ -190,13 +179,9 @@ data:
                   arguments:
                     parameters:
                     - name: volume-name
-                      value: {{"pvc-" + job['volume-name']}}
+                      value: {{"pvc-" + spec['volume_name']}}
                     - name: config-name
-                      {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                      value: '{{job['chaos-params']['cluster-config']['name']}}'
-                      {% else %}
                       value: remote-cluster-kube-config
-                      {% endif %}
                     - name: name
                       value: {{check['name']}}
                     - name: command
@@ -223,11 +208,7 @@ data:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
-                    {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                    name: "{{spec['job-params'][0][0]['chaos-params']['cluster-config']['name']}}"
-                    {% else %}
                     name: remote-cluster-kube-config
-                    {% endif %}
                     namespace: metacontroller
                   data:
                     config: |
@@ -237,8 +218,8 @@ data:
                           - name: default-cluster
                             cluster:
                               insecure-skip-tls-verify: true
-                              {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                              server: "{{spec['job-params'][0][0]['chaos-params']['cluster-config']['apiserver']}}"
+                              {% if spec['remote-cluster'] == 'True' %}
+                              server: {{spec['kube-apiserver']}}
                               {% else %}
                               server: 'https://kubernetes.default.svc.cluster.local:443'
                               {% endif %}
@@ -252,11 +233,7 @@ data:
                           users:
                           - name: default-user
                             user:
-                              {% if 'remote-cluster' in job and job['remote-cluster'] == 'True' %}
-                              token: "{{spec['job-params'][0][0]['chaos-params']['cluster-config']['token']}}"
-                              {% else %}
-                              token: ""
-                              {% endif %}
+                              token: {{spec['remote-cluster-token']}}
 
             - name: volume-pvc
               resource:
@@ -265,14 +242,14 @@ data:
                   kind: PersistentVolumeClaim
                   apiVersion: v1
                   metadata:
-                    name: "{{"pvc-" + spec['job-params'][0][0]['volume-name']}}"
+                    name: {{"pvc-" + spec['volume_name']}}
                     namespace: metacontroller
                   spec:
                     accessModes: [ "ReadWriteOnce" ]
                     resources:
                       requests:
-                        storage: "{{spec['job-params'][0][0]['volume-storage']}}"
-                    storageClassName: "{{spec['job-params'][0][0]['volume-storage-class']}}"
+                        storage: {{spec['volume_storage']}}
+                    storageClassName: {{spec['volume_storage_class']}}
 
             - name: sanity-checks
               inputs:
@@ -331,7 +308,6 @@ data:
                   kind: Job
                   metadata:
                     generateName: log-analyzer-
-                    namespace: metacontroller
                   spec:
                     template:
                       metadata:
@@ -350,15 +326,13 @@ data:
                           name: log-collector
                           image: kiriti29/torpedo-chaos-plugin:v1
                           volumeMounts:
-                            - name: torpedo
-                              mountPath: /var/log
                             - name: tz-config
                               mountPath: /etc/localtime
-                            {% if 'remote-cluster' not in spec or spec['remote-cluster'] != "True" %}
+                            - name: torpedo
+                              mountPath: /var/log
                             - name: kubeconfig
                               mountPath: /root/.kube/config
                               subPath: config
-                            {% endif %}
 
                         volumes:
                         - name: tz-config
@@ -366,12 +340,10 @@ data:
                              path: /etc/localtime
                         - name: torpedo
                           persistentVolumeClaim:
-                            claimName: {{"pvc-" + spec['job-params'][0][0]['volume-name']}}
-                        {% if 'remote-cluster' not in spec or spec['remote-cluster'] != "True" %}
+                            claimName: {{"pvc-" + spec['volume_name']}}
                         - name: kubeconfig
                           configMap:
                             name: remote-cluster-kube-config
-                        {% endif %}
 
     torpedo-chaos-job.yaml: |
         manifest: |
@@ -379,7 +351,6 @@ data:
           kind: Job
           metadata:
             name: {{inputs.parameters.name}}-{{inputs.parameters.namespace}}-resilliency-chaos-test
-            namespace: metacontroller
           spec:
             template:
               metadata:
@@ -439,7 +410,6 @@ data:
           kind: Job
           metadata:
             name: {{inputs.parameters.name}}-{{inputs.parameters.namespace}}-resilliency-traffic-test
-            namespace: metacontroller
           spec:
             template:
               metadata:
@@ -465,7 +435,7 @@ data:
                   - python3
                   - /opt/torpedo/main.py
                   - "{{inputs.parameters.auth}}"
-                  - {{inputs.parameters.traffic-module}}
+                  - {{inputs.parameters.service-mapping}}
                   - "{{inputs.parameters.job-duration}}"
                   - "{{inputs.parameters.count}}"
                   - "{{inputs.parameters.nodes}}"
@@ -497,6 +467,5 @@ data:
 kind: ConfigMap
 metadata:
   name: torpedo-controller
-  namespace: metacontroller
   labels:
     app: resiliency

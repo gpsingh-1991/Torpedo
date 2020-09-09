@@ -1,0 +1,36 @@
+apiVersion: torpedo.k8s.att.io/v1
+kind: Torpedo
+metadata:
+  name: helloworld-test
+spec:
+  auth:
+    test_service_endpoint: http://32.68.220.23:31504
+
+  job-params:
+    - - service: helloworld
+        component: helloworld
+        kill-interval: 90
+        kill-count: 1
+        same-node: False
+        pod-labels:
+          - 'app=hello-kubernetes'
+        node-labels:
+          - 'kubernetes.io/hostname=mtn52r08c006'
+        service-mapping: generic
+        name: helloworld
+        nodes: ''
+        max-nodes: 1
+        extra-args: ''
+        job-duration: 120
+        count: 60
+        sanity-checks: ''
+
+  orchestrator_plugin: "torpedo-traffic-orchestrator"
+  chaos_plugin: "torpedo-chaos"
+  namespace: default
+  volume_storage_class: "general"
+  volume_storage: "10Gi"
+  volume_name: "helloworld-torpedo-test"
+  remote-cluster: "True"
+  kube-apiserver: "https://32.68.220.23:6443"
+  remote-cluster-token: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImR6aktOU2E2YlVvT3ljQUh3aldIV0VaMUVGMmduLTFUbUlhRFF2RE9hNTgifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJkZWZhdWx0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlZmF1bHQtdG9rZW4tdHI4c2IiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVmYXVsdCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjA2YzQ3ZmY2LWVkYjAtNDYwNC1hZmNkLTgyMjg4NzcyNjM1YSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmRlZmF1bHQifQ.TBB0C8MK_Z5UPP8OEuBzzx5JOKKWK_SuIYWSb1DGLW22mvkbinNQwlmrZzMc909vjzkIKgEczHR7fGGls9EVOUZx8Xg1lxr8EP3MFYr8-HvOwfGDLl6P9aJ8K8VQnToASLd0PSkXMXtT_Ftqp5bVzr_rXNZo2K1WhUXfv0gdU8UaLcUsIt5-_fxxkgnJdywuzRIyhLYL_v63BfG7WFkOiA29r5pLp8ObrgoGHY2-_Iqcp2KfaeKBKtLHhqbQpHP4rKrVIFEcFCtR3bJtAOH-YjuOrjarGZsJ-IulMdrQNd5jaFxWlMKtfQeduAMPSeZNR07foa-IxaQ4vFb05YDuvQ"

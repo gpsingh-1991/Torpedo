@@ -380,7 +380,7 @@
 				"service-mapping": "UCP"
 			},
 		"generic": {
-				"name": "promande_get_health",
+				"name": "http_endpoint_health",
 				"service_type": "kubernetesprovisioner",
 				"operation": "GET",
 				"url": "/health",
