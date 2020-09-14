@@ -48,8 +48,8 @@ class Controller(BaseHTTPRequestHandler):
 
         self.log_message(" Job: %s", job)
         self.log_message(" Children: %s", children)
-        orchestrator_template = job['spec']['orchestrator_plugin'] + ".yaml"
-        chaos_template = job['spec']['chaos_plugin'] + ".yaml"
+        orchestrator_template = "torpedo-traffic-orchestrator.yaml"
+        chaos_template = "torpedo-chaos.yaml"
         orchestrator_path = os.path.join("/hooks/templates",
                                          orchestrator_template)
         chaos_path = os.path.join("/hooks/templates", chaos_template)
