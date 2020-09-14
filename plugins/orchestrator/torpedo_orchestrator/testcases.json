@@ -379,6 +379,16 @@
 				"duration": "duration",
 				"service-mapping": "UCP"
 			},
+		"generic": {
+				"name": "http_endpoint_health",
+				"service_type": "kubernetesprovisioner",
+				"operation": "GET",
+				"url": "/health",
+				"concurrency": 1,
+				"repeat": 20,
+				"duration": "duration",
+				"service-mapping": "GENERIC"
+			},
 		"kubernetes-api": {
 		    "name": "kubernetes_pod_list",
 		    "operation": "GET",

@@ -239,14 +239,14 @@ class GenericClient():
             response._content = str.encode(error_msg)
             return response
 
-    def GET(self, url, headers, data=None):
+    def GET(self, url, headers=None, data=None):
         """ Hit a get request on passed url """
         try:
             response = requests.get(url, headers=headers, verify=False,
                                     data=json.dumps(data))
             if response.status_code >= 200 and response.status_code < 400:
                 tc_status = 'PASS'
-                message = "Stripped not printing"
+                message = response.text
             else:
                 tc_status = 'FAIL'
                 message = response.text
