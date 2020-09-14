@@ -47,17 +47,17 @@ data:
                     name: {{inputs.parameters.name}}
                     image: {{inputs.parameters.image}}
                     volumeMounts:
-                      # - name: tz-config
-                      #   mountPath: /etc/localtime
+                      - name: tz-config
+                        mountPath: /etc/localtime
                       - name: torpedo
                         mountPath: /var/log
                       - name: kubeconfig
                         mountPath: /root/.kube/config
                         subPath: config
                   volumes:
-                  # - name: tz-config
-                  #   hostPath:
-                  #      path: /etc/localtime
+                  - name: tz-config
+                    hostPath:
+                       path: /etc/localtime
                   - name: torpedo
                     persistentVolumeClaim:
                       claimName: {{inputs.parameters.volume-name}}
@@ -348,16 +348,16 @@ data:
                           volumeMounts:
                             - name: torpedo
                               mountPath: /var/log
-                            # - name: tz-config
-                            #   mountPath: /etc/localtime
+                            - name: tz-config
+                              mountPath: /etc/localtime
                             - name: kubeconfig
                               mountPath: /root/.kube/config
                               subPath: config
 
                         volumes:
-                        # - name: tz-config
-                        #   hostPath:
-                        #      path: /etc/localtime
+                        - name: tz-config
+                          hostPath:
+                             path: /etc/localtime
                         - name: torpedo
                           persistentVolumeClaim:
                             claimName: {{job['volume-name']}}
@@ -412,17 +412,17 @@ data:
                   name: {{inputs.parameters.name}}
                   image: klkumar/torpedo-chaos-plugin:v1
                   volumeMounts:
-                    # - name: tz-config
-                    #   mountPath: /etc/localtime
+                    - name: tz-config
+                      mountPath: /etc/localtime
                     - name: torpedo
                       mountPath: /var/log
                     - name: kubeconfig
                       mountPath: /root/.kube/config
                       subPath: config
                 volumes:
-                # - name: tz-config
-                #   hostPath:
-                #      path: /etc/localtime
+                - name: tz-config
+                  hostPath:
+                     path: /etc/localtime
                 - name: torpedo
                   persistentVolumeClaim:
                     claimName: {{inputs.parameters.volume-name}}
@@ -474,17 +474,17 @@ data:
                   name: {{inputs.parameters.name}}
                   image: gpsingh1991/torpedo-traffic-generator:v1
                   volumeMounts:
-                    # - name: tz-config
-                    #   mountPath: /etc/localtime
+                    - name: tz-config
+                      mountPath: /etc/localtime
                     - name: torpedo
                       mountPath: /var/log
                     - name: kubeconfig
                       mountPath: /root/.kube/config
                       subPath: config
                 volumes:
-                # - name: tz-config
-                #   hostPath:
-                #      path: /etc/localtime
+                - name: tz-config
+                  hostPath:
+                     path: /etc/localtime
                 - name: torpedo
                   persistentVolumeClaim:
                     claimName: {{inputs.parameters.volume-name}}

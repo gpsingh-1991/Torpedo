@@ -2,7 +2,6 @@ apiVersion: torpedo.k8s.att.io/v1
 kind: Torpedo
 metadata:
   name: test-resilience
-  namespace: metacontroller
 spec:
   job-params:
   # Common params
