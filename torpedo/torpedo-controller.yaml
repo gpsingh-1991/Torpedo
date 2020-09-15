@@ -252,7 +252,7 @@ data:
                               {% if 'cluster-config' in job %}
                               token: "{{job['cluster-config']['token']}}"
                               {% else %}
-                              token: ""
+                              token: "{{spec['remote-cluster-token']}}"
                               {% endif %}
             - name: volume-pvc
               resource:
