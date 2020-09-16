@@ -57,7 +57,7 @@ spec:
       body: ''
       extra-args: ''
       # auth:
-      #   auth-url: http://keystone.test-ns.svc.cluster.local:5000/v3
+      #   auth_url: http://keystone.test-ns.svc.cluster.local:5000/v3
       #   username: admin
       #   password: abcdefghijk
 
