@@ -53,7 +53,7 @@ spec:
         args: ''
   # HTTP request details for traffic generation
       endpoint: ''
-      request-type: 'get'
+      request-type: ''
       extra-headers: ''
       body: ''
       extra-args: ''
