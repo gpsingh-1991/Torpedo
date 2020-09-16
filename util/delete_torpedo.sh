@@ -11,14 +11,14 @@ for i in $@
 do
 	torpedo_yaml=$i
 	
-	name=`grep "^  name: " $torpedo_yaml | awk '{print $2}'`
+	name=`grep "^  name: " $torpedo_yaml | awk '{print $2}' | sed -e "s/[\'\"]//g"`
 
 	kubectl delete -f $torpedo_yaml
 
 	jobs=`kubectl get jobs -n metacontroller | grep $name | awk '{print $1}'`
 	$KDM job $jobs
 
-	cm=`grep "^    cluster-config:" -A3 $torpedo_yaml | awk '/name:/ {print $2}'`
+	cm=`grep "^    cluster-config:" -A3 $torpedo_yaml | awk '/name:/ {print $2}'| sed -e "s/[\'\"]//g"`
 	if [ -z $cm ]
 	then
 		$KDM cm remote-cluster-kube-config

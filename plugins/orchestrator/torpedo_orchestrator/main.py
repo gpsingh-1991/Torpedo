@@ -62,7 +62,10 @@ class Runner():
 
 if __name__ == "__main__":
     inputs = sys.argv
-    auth = ast.literal_eval(inputs[1])
+    if inputs[1]:
+        auth = ast.literal_eval(inputs[1])
+    else:
+        auth = {}
     component = inputs[2]
     duration = int(inputs[3])
     count = int(inputs[4])

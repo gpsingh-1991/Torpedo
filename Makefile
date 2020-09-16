@@ -1,5 +1,5 @@
 BUILD_DIR           := $(shell mktemp -d)
-IMAGE_PREFIX        ?= kiriti29
+IMAGE_PREFIX        ?= gpsingh1991
 TRAFFIC_IMAGE_NAME  ?= torpedo-traffic-generator
 CHAOS_IMAGE_NAME    ?= torpedo-chaos-plugin
 IMAGE_TAG           ?= v1

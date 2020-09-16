@@ -67,7 +67,6 @@ data:
 
     chaos-parameters.yaml: |
           chaos-parameters:
-          - name
           - target-namespace
           - pod-labels
           - node-labels
@@ -79,7 +78,6 @@ data:
           - count
     traffic-parameters.yaml: |
           traffic-parameters:
-          - name
           - target-namespace
           - auth
           - job-duration
@@ -147,10 +145,12 @@ data:
                     - name: {{ key }}
                       value: "{{ value }}"
                     {% endfor %}
-                    {% if 'auth' not in job %}
-                    - name: auth
-                      value: "{}"
+                    {% for param in spec['traffic_parameters']%}
+                    {% if param not in job and param not in job['traffic-params'] and param not in job['chaos-params'] %}
+                    - name: {{ param }}
+                      value: ''
                     {% endif %}
+                    {% endfor %}
                 {{ traffic_name_list.append("traffic-orchestrator") }}
                 {% endif %}
                 {% if 'chaos-params' in job %}
@@ -175,6 +175,12 @@ data:
                     {% for key, value in job['chaos-params'].items() %}
                     - name: {{ key }}
                       value: "{{ value }}"
+                    {% endfor %}
+                    {% for param in spec['chaos_parameters']%}
+                    {% if param not in job and param not in job['traffic-params'] and param not in job['chaos-params'] %}
+                    - name: {{ param }}
+                      value: ''
+                    {% endif %}
                     {% endfor %}
                 {{ chaos_name_list.append("chaos-orchestrator") }}
                 {% endif %}
@@ -291,6 +297,7 @@ data:
                 {% for param in spec['traffic_parameters'] %}
                 - name: {{ param }}
                 {% endfor %}
+                - name: name
                 - name: config-name
                 - name: volume-name
               resource:
@@ -306,6 +313,7 @@ data:
                 {% for param in spec['chaos_parameters'] %}
                 - name: {{ param }}
                 {% endfor %}
+                - name: name
                 - name: config-name
                 - name: volume-name
               nodeSelector:
@@ -344,7 +352,7 @@ data:
                           - /opt/torpedo/log_analyzer.py
                           - "{{service_list}}"
                           name: log-collector
-                          image: klkumar/torpedo-chaos-plugin:v1
+                          image: gpsingh1991/torpedo-chaos-plugin:v1
                           volumeMounts:
                             - name: torpedo
                               mountPath: /var/log
@@ -410,7 +418,7 @@ data:
                   - "{{inputs.parameters.kill-count}}"
                   - "{{inputs.parameters.max-nodes}}"
                   name: {{inputs.parameters.name}}
-                  image: klkumar/torpedo-chaos-plugin:v1
+                  image: gpsingh1991/torpedo-chaos-plugin:v1
                   volumeMounts:
                     - name: tz-config
                       mountPath: /etc/localtime
@@ -472,7 +480,7 @@ data:
                   - "{{inputs.parameters.extra-headers}}"
                   - "{{inputs.parameters.body}}"
                   name: {{inputs.parameters.name}}
-                  image: gpsingh1991/torpedo-traffic-generator:v1
+                  image: gpsingh1991/torpedo-traffic-generator:v3
                   volumeMounts:
                     - name: tz-config
                       mountPath: /etc/localtime
