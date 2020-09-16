@@ -1,36 +1,39 @@
 apiVersion: torpedo.k8s.att.io/v1
 kind: Torpedo
 metadata:
-  name: helloworld-test
+  name: hello-world
 spec:
-  auth:
-    test_service_endpoint: http://<IP/Name>:31504
 
   job-params:
-    - - service: helloworld
-        component: helloworld
-        kill-interval: 90
-        kill-count: 1
-        same-node: False
-        pod-labels:
-          - 'app=hello-kubernetes'
-        node-labels:
-          - 'kubernetes.io/hostname=host006'
-        service-mapping: generic
-        name: helloworld
-        nodes: ''
-        max-nodes: 1
-        extra-args: ''
-        job-duration: 120
-        count: 60
-        sanity-checks: ''
+    job-duration: 120
+    count: 0
+    volume-storage-class: "general"
+    volume-storage: "10Gi"
+    volume-name: "helloworld-torpedo-test"
+    target-namespace: default
+    cluster-config:
+      name: 'my-remote-cluster'
+      apiserver: 'https://<IP>:6443'
+      token: ''
 
-  orchestrator_plugin: "torpedo-traffic-orchestrator"
-  chaos_plugin: "torpedo-chaos"
-  namespace: default
-  volume_storage_class: "general"
-  volume_storage: "10Gi"
-  volume_name: "helloworld-torpedo-test"
-  remote-cluster: "True"
-  kube-apiserver: "https://<IP>:6443"
-  remote-cluster-token:
+    chaos-params:
+      kill-interval: 90
+      kill-count: 1
+      same-node: False
+      pod-labels:
+        - 'app=hello-kubernetes'
+      node-labels: []
+      nodes: ''
+      max-nodes: 1
+
+    traffic-params:
+      traffic-module: http-generic
+      endpoint: 'http://192.168.56.101:30001'
+      request-type: 'get'
+      extra-headers: ''
+      body: ''
+      extra-args: ''
+
+    sanity-params:
+      image: ''
+      extra-args: ''
