@@ -31,12 +31,17 @@ def log_analyzer(log_dir, service_list):
     for svc in service_list:
         svc_file = "".join(
             [x for x in log_list if (svc['service'] in x and "traffic" in x)])
+        chaos_file = "".join(
+            [x for x in log_list if (svc['service'] in x and "chaos" in x)])
         pass_search = (
             "grep -inr %s/%s.log -e 'pass'|wc -l") % (log_dir,
                                                       svc_file)
         fail_search = (
             "grep -inr %s/%s.log -e 'fail'|wc -l") % (log_dir,
                                                       svc_file)
+        pods_killed = (
+            "grep -inr %s/%s.log -e 'INFO Deleting pod'|wc -l"
+            ) % (log_dir, chaos_file)
         pass_tc = subprocess.check_output(pass_search,
                                           stderr=subprocess.STDOUT,
                                           shell=True).decode(
@@ -45,10 +50,15 @@ def log_analyzer(log_dir, service_list):
                                           stderr=subprocess.STDOUT,
                                           shell=True).decode(
                                           'utf-8').strip("\n")
+        kill_tc = subprocess.check_output(pods_killed,
+                                          stderr=subprocess.STDOUT,
+                                          shell=True).decode(
+                                          'utf-8').strip("\n")
         result_dict = {
                        "Test Case": svc['service'],
                        "TimeStamp": cur_time,
                        "Duration": svc['duration'],
+                       "Number of pods killed": kill_tc,
                        "Pass test count": pass_tc,
                        "Fail test count": fail_tc
                       }
