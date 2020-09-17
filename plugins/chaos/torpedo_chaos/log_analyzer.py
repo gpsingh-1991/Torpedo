@@ -17,8 +17,45 @@ formatter = logging.Formatter(
 stream_handle.setFormatter(formatter)
 LOG.addHandler(stream_handle)
 
-pod_conn = Pods()
+token = subprocess.check_output(
+    "cat /var/run/secrets/kubernetes.io/serviceaccount/token",
+    stderr=subprocess.STDOUT,
+    shell=True).decode('utf-8').strip("\n")
 
+kubeconf_path = '/root/.kube'
+
+kubeconf = """
+apiVersion: v1
+kind: Config
+clusters:
+- name: default-cluster
+  cluster:
+    insecure-skip-tls-verify: true
+
+    server: "https://kubernetes.default.svc.cluster.local:443"
+
+contexts:
+- name: default-context
+  context:
+    cluster: default-cluster
+    namespace: default
+    user: default-user
+current-context: default-context
+users:
+- name: default-user
+  user:
+
+    token: "%s"
+""" % (token)
+
+try:
+    os.mkdir(kubeconf_path)
+except OSError:
+    print ("Creation of the directory %s failed" % kubeconf_path)
+
+with open(kubeconf_path + '/config', 'w') as f:
+    f.write(kubeconf)
+pod_conn = Pods()
 
 def log_analyzer(log_dir, service_list):
 
@@ -31,12 +68,17 @@ def log_analyzer(log_dir, service_list):
     for svc in service_list:
         svc_file = "".join(
             [x for x in log_list if (svc['service'] in x and "traffic" in x)])
+        chaos_file = "".join(
+            [x for x in log_list if (svc['service'] in x and "chaos" in x)])
         pass_search = (
-            "grep -inr %s/%s.log -e 'pass'|wc -l") % (log_dir,
+            "grep -i %s/%s.log -e 'pass'|wc -l") % (log_dir,
                                                       svc_file)
         fail_search = (
-            "grep -inr %s/%s.log -e 'fail'|wc -l") % (log_dir,
+            "grep -i %s/%s.log -e 'fail'|wc -l") % (log_dir,
                                                       svc_file)
+        pods_killed = (
+            "grep -i %s/%s.log -e 'INFO Deleting pod'|wc -l"
+            ) % (log_dir, chaos_file)
         pass_tc = subprocess.check_output(pass_search,
                                           stderr=subprocess.STDOUT,
                                           shell=True).decode(
@@ -45,10 +87,15 @@ def log_analyzer(log_dir, service_list):
                                           stderr=subprocess.STDOUT,
                                           shell=True).decode(
                                           'utf-8').strip("\n")
+        kill_tc = subprocess.check_output(pods_killed,
+                                          stderr=subprocess.STDOUT,
+                                          shell=True).decode(
+                                          'utf-8').strip("\n")
         result_dict = {
                        "Test Case": svc['service'],
                        "TimeStamp": cur_time,
                        "Duration": svc['duration'],
+                       "Number of pods killed": kill_tc,
                        "Pass test count": pass_tc,
                        "Fail test count": fail_tc
                       }
