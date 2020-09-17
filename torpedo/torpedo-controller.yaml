@@ -358,9 +358,6 @@ data:
                               mountPath: /var/log
                             - name: tz-config
                               mountPath: /etc/localtime
-                            - name: kubeconfig
-                              mountPath: /root/.kube/config
-                              subPath: config
 
                         volumes:
                         - name: tz-config
@@ -369,13 +366,6 @@ data:
                         - name: torpedo
                           persistentVolumeClaim:
                             claimName: {{job['volume-name']}}
-                        - name: kubeconfig
-                          configMap:
-                            {% if 'cluster-config' in job %}
-                            name: '{{job['cluster-config']['name']}}'
-                            {% else %}
-                            name: remote-cluster-kube-config
-                            {% endif %}
 
     torpedo-chaos-job.yaml: |
         manifest: |
