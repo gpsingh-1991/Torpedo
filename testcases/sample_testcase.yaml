@@ -60,7 +60,16 @@ spec:
       #   auth_url: http://keystone.test-ns.svc.cluster.local:5000/v3
       #   username: admin
       #   password: abcdefghijk
+      #   user_domain_name: default 
+      #   project_domain_name: default 
+      #   project_name: admin
 
+ # elk for log analyzer to push test_results
+   # elk-params:
+   #   elasticsearch-apiendpoint: 'http://elasticsearch-master.default.svc.cluster.local:9200/'
+   #   user: ''
+   #   password: ''
+   #   doc-type: 'local' #should be 'local' or 'remote'
 
   # Sanity Params
     sanity-params:

@@ -2,6 +2,7 @@ import ast
 import json
 import logging
 import os
+import requests
 import subprocess
 import sys
 
@@ -93,12 +94,33 @@ def log_analyzer(log_dir, service_list):
                                           'utf-8').strip("\n")
         result_dict = {
                        "Test Case": svc['service'],
+                       "Cluster Name": svc['cluster-type'],
                        "TimeStamp": cur_time,
                        "Duration": svc['duration'],
                        "Number of pods killed": kill_tc,
                        "Pass test count": pass_tc,
                        "Fail test count": fail_tc
                       }
+        #push Test_results to elasticsearch
+        if 'elasticsearch' in svc:
+            url = svc['elasticsearch']['elasticsearch-apiendpoint']
+            index = svc['elasticsearch']['index']
+            auth = (svc['elasticsearch']['user'], svc['elasticsearch']['password'])
+            doc_type = svc['service']
+            data = json.dumps(result_dict)
+            headers={'Content-Type': 'application/json'}
+            req = requests.get(url+index,auth=auth)
+            if req.status_code != 200:
+                index_obj = requests.put(url+index,auth=auth)
+                es_push_log_url = index_obj.url + "/" + doc_type
+            else:
+                es_push_log_url = url + index + "/" + doc_type
+            push = requests.post(es_push_log_url,data=data,auth=auth,headers=headers)
+            if push.status_code != 201:
+                LOG.error("Logs are not pushed to ELK \n" + json.dumps(
+                 push.text, indent=2))
+            else:
+                LOG.info("Resiliency Test Results pushed in ELK \n")
         result_list.append(result_dict)
     with open(os.path.join(log_dir, "test_results"), "w") as f:
         json.dump(result_list, f)
