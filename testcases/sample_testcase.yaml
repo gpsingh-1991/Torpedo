@@ -69,7 +69,7 @@ spec:
    #   elasticsearch-apiendpoint: 'http://elasticsearch-master.default.svc.cluster.local:9200/'
    #   user: ''
    #   password: ''
-   #   doc-type: 'local' #should be 'local' or 'remote'
+   #   index: 'torpedo'
 
   # Sanity Params
     sanity-params:
