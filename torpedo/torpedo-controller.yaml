@@ -190,8 +190,10 @@ data:
                     {% else %}
                         {{ service_list.append({'service': torpedo_name , 'cluster-type': 'local', 'duration': job['job-duration'], 'elasticsearch': job['elk-params']}) }}
                     {% endif %}
+                {% elif 'cluster-config' in job %}
+          {{ service_list.append({'service': torpedo_name , 'cluster-type': job['cluster-config']['name'], 'duration': job['job-duration']}) }}
                 {% else %}
-                {{ service_list.append({'service': torpedo_name , 'duration': job['job-duration']}) }}
+                {{ service_list.append({'service': torpedo_name , 'cluster-type': 'local', 'duration': job['job-duration']}) }}
                 {% endif %}
                 {% if 'sanity-checks' in job %}
                 - name: {{ "sanity-checks-" +  torpedo_name }}
