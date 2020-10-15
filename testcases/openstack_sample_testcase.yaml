@@ -65,6 +65,12 @@ spec:
         project_domain_name: default
         project_name: admin
 
+  # elk for log analyzer
+   # elk-params:
+   #   elasticsearch-apiendpoint: 'http://elasticsearch-master.default.svc.cluster.local:9200/'
+   #   user: ''
+   #   password: ''
+   #   index: 'torpedo'
 
   # Sanity Params
     sanity-params:
