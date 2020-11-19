@@ -76,6 +76,10 @@ data:
           - kill-interval
           - job-duration
           - count
+          - image
+          - args
+          - command
+          - env
     traffic-parameters.yaml: |
           traffic-parameters:
           - target-namespace
@@ -166,35 +170,35 @@ data:
                       {% else %}
                       value: remote-cluster-kube-config
                       {% endif %}
+                    {% set added_params = [] %}
                     {% for key, value in job.items() %}
                     {% if key != "sanity-checks" and key != 'chaos-params' and key != 'traffic-params'%}
                     - name: {{ key }}
                       value: "{{ value }}"
+                    {{ added_params.append(key) }}
                     {% endif %}
                     {% endfor %}
                     {% for key, value in job['chaos-params'].items() %}
                     - name: {{ key }}
                       value: "{{ value }}"
+                    {{ added_params.append(key) }}
                     {% endfor %}
+                    {% if 'plugin' in job['chaos-params'] %}
+                    {% for key, value in job['chaos-params']['plugin'].items() %}
+                    {{ added_params.append(key) }}
+                    - name: {{ key }}
+                      value: "{{ value }}"
+                    {% endfor %}
+                    {% endif %}
                     {% for param in spec['chaos_parameters']%}
-                    {% if param not in job and param not in job['traffic-params'] and param not in job['chaos-params'] %}
+                    {% if param not in added_params %}
                     - name: {{ param }}
                       value: ''
                     {% endif %}
                     {% endfor %}
                 {{ chaos_name_list.append("chaos-orchestrator") }}
                 {% endif %}
-                {% if 'elk-params' in job %}
-                    {% if 'cluster-config' in job %}
-                        {{ service_list.append({'service': torpedo_name , 'cluster-type': job['cluster-config']['name'], 'duration': job['job-duration'], 'elasticsearch': job['elk-params']}) }}
-                    {% else %}
-                        {{ service_list.append({'service': torpedo_name , 'cluster-type': 'local', 'duration': job['job-duration'], 'elasticsearch': job['elk-params']}) }}
-                    {% endif %}
-                {% elif 'cluster-config' in job %}
-          {{ service_list.append({'service': torpedo_name , 'cluster-type': job['cluster-config']['name'], 'duration': job['job-duration']}) }}
-                {% else %}
-                {{ service_list.append({'service': torpedo_name , 'cluster-type': 'local', 'duration': job['job-duration']}) }}
-                {% endif %}
+                {{ service_list.append({"service": torpedo_name , "duration": job['job-duration']}) }}
                 {% if 'sanity-checks' in job %}
                 - name: {{ "sanity-checks-" +  torpedo_name }}
                   {% if orchestrator_dependency %}
@@ -333,7 +337,11 @@ data:
                 successCondition: status.succeeded > 0
                 failureCondition: status.failed > 3
                 manifest: |
+                {% if 'plugin' in job['chaos-params'] %}
+                  {{spec['torpedo_chaos_plugin_job_manifest']|indent(8) }}
+                {% else %}
                   {{spec['torpedo_chaos_job_manifest']|indent(8) }}
+                {% endif %}
 
             - name: log-analysis
               resource:
@@ -419,6 +427,58 @@ data:
                   - "{{inputs.parameters.max-nodes}}"
                   name: {{inputs.parameters.name}}
                   image: gpsingh1991/torpedo-chaos-plugin:v1
+                  volumeMounts:
+                    - name: tz-config
+                      mountPath: /etc/localtime
+                    - name: torpedo
+                      mountPath: /var/log
+                    - name: kubeconfig
+                      mountPath: /root/.kube/config
+                      subPath: config
+                volumes:
+                - name: tz-config
+                  hostPath:
+                     path: /etc/localtime
+                - name: torpedo
+                  persistentVolumeClaim:
+                    claimName: {{inputs.parameters.volume-name}}
+                - name: kubeconfig
+                  configMap:
+                    name: {{inputs.parameters.config-name}}
+
+    torpedo-chaos-plugin-job.yaml: |
+        manifest: |
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: {{inputs.parameters.name}}-{{inputs.parameters.target-namespace}}-resilliency-chaos-test
+            namespace: metacontroller
+          spec:
+            template:
+              metadata:
+                labels:
+                  resiliency: enabled
+              spec:
+                serviceAccountName: resiliency
+                nodeSelector:
+                  resiliency: enabled
+                affinity:
+                  podAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                    - labelSelector:
+                        matchExpressions:
+                        - key: resiliency
+                          operator: In
+                          values:
+                          - enabled
+                      topologyKey: "kubernetes.io/hostname"
+                restartPolicy: OnFailure
+                containers:
+                - command: {{inputs.parameters.command}}
+                  name: {{inputs.parameters.name}}
+                  image: {{inputs.parameters.image}}
+                  args: {{inputs.parameters.args}}
+                  env: {{inputs.parameters.env}}
                   volumeMounts:
                     - name: tz-config
                       mountPath: /etc/localtime

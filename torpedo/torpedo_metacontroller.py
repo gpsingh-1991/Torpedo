@@ -36,6 +36,9 @@ def new_workflow(job):
          template_filename).render(job))
     wf = yaml.load(wf_text)
 
+    with open("/tmp/result.yaml", "w") as f:
+        yaml.dump(wf, f, default_flow_style=False)
+
     return wf
 
 
@@ -50,16 +53,19 @@ class Controller(BaseHTTPRequestHandler):
         self.log_message(" Children: %s", children)
         orchestrator_template = "torpedo-traffic-orchestrator.yaml"
         chaos_template = "torpedo-chaos.yaml"
+        chaos_plugin_template = "torpedo-chaos-plugin.yaml"
         orchestrator_path = os.path.join("/hooks/templates",
                                          orchestrator_template)
         chaos_path = os.path.join("/hooks/templates", chaos_template)
+        chaos_plugin_path = os.path.join("/hooks/templates",
+                                         chaos_plugin_template)
         traffic_path = os.path.join("/hooks/templates",
                                     "traffic-parameters.yaml")
         chaos_param_path = os.path.join("/hooks/templates",
                                         "chaos-parameters.yaml")
         sanity_path = os.path.join("/hooks/templates", "sanity_checks.yaml")
         if 'remote-cluster' not in job['spec'] or \
-                job['spec']['remote-cluster'] is "False":
+                job['spec']['remote-cluster'] == "False":
             token = subprocess.check_output(
                 "cat /var/run/secrets/kubernetes.io/serviceaccount/token",
                 stderr=subprocess.STDOUT,
@@ -69,6 +75,8 @@ class Controller(BaseHTTPRequestHandler):
             wf = yaml.load(f)
         with open(chaos_path, "r") as f:
             wf1 = yaml.load(f)
+        with open(chaos_plugin_path, "r") as f:
+            wf2 = yaml.load(f)
         with open(traffic_path, "r") as f:
             traffic_parameters = yaml.load(f)
         with open(chaos_param_path, "r") as f:
@@ -78,6 +86,7 @@ class Controller(BaseHTTPRequestHandler):
         job['spec']['torpedo_sanity_checks'] = sanity_checks['manifest']
         job['spec']['torpedo_traffic_job_manifest'] = wf['manifest']
         job['spec']['torpedo_chaos_job_manifest'] = wf1['manifest']
+        job['spec']['torpedo_chaos_plugin_job_manifest'] = wf2['manifest']
         job['spec']['traffic_parameters'] = \
             traffic_parameters['traffic-parameters']
         job['spec']['chaos_parameters'] = chaos_parameters['chaos-parameters']
@@ -86,7 +95,7 @@ class Controller(BaseHTTPRequestHandler):
         if is_job_finished(job):
             desired_status = copy.deepcopy(job['status'])
             desired_status['conditions'] = [{'type': 'Complete',
-                                            'status': 'True'}]
+                                             'status': 'True'}]
             return {'status': desired_status, 'children': []}
 
     # Compute status based on what we observed, before building desired state.
@@ -98,10 +107,10 @@ class Controller(BaseHTTPRequestHandler):
                 children['Workflow.argoproj.io/v1alpha1'].get(
                     child, {})):
             desired_status['conditions'] = [{'type': 'Complete',
-                                            'status': 'True'}]
+                                             'status': 'True'}]
         else:
             desired_status['conditions'] = [{'type': 'Complete',
-                                            'status': 'False'}]
+                                             'status': 'False'}]
 
         # Always generate desired state for child if we reach this point.
         # We should not delete children until after we know we've recorded

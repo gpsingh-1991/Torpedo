@@ -6,4 +6,5 @@ WORKDIR /opt/torpedo
 COPY entrypoint.sh entrypoint.sh
 RUN /bin/bash entrypoint.sh
 COPY plugins/chaos/torpedo_chaos /opt/torpedo/
+ENV KUBECONFIG=/root/.kube/config
 CMD ["/bin/bash"]

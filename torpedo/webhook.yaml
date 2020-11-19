@@ -28,7 +28,7 @@ spec:
           mountPath: /hooks
         - name: hooks
           mountPath: /hooks/templates
-          
+
       volumes:
       - name: hooks
         configMap:
@@ -36,6 +36,8 @@ spec:
           items:
             - key: torpedo-chaos-job.yaml
               path: torpedo-chaos.yaml
+            - key: torpedo-chaos-plugin-job.yaml
+              path: torpedo-chaos-plugin.yaml
             - key: sanity_checks.yaml
               path: sanity_checks.yaml
             - key: torpedo_argo.j2

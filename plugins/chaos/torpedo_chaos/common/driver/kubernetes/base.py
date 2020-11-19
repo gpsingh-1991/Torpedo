@@ -14,11 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import subprocess
+import os
 import urllib3
-import yaml
 
-from kubernetes import client, config, utils
+from kubernetes import client, config
 
 
 urllib3.disable_warnings()
@@ -27,7 +26,10 @@ urllib3.disable_warnings()
 class Kubernetes(object):
 
     def __init__(self, **kwargs):
-        config.load_kube_config()
         conf = client.Configuration()
+        if os.path.exists(os.environ['KUBECONFIG']):
+            config.load_kube_config()
+        else:
+            config.load_incluster_config()
         conf.verify_ssl = False
         self.api_client = client.ApiClient(conf)

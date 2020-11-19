@@ -64,7 +64,7 @@ class k8sExecutioner(object):
         #     p1.start()
         # for pr in p:
         #     pr.join()
-            # self.kill_pod(self.namespace, sel)
+        # self.kill_pod(self.namespace, sel)
         sleep(30)
         final_pod_list.extend(
             pod_conn.get_pods(namespace=self.namespace,
